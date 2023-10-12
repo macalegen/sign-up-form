@@ -1,99 +1,68 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRef } from "react";
 import styles from "./app.module.css";
 
+const fieldSchema = yup.object().shape({
+  email: yup.string().matches(/@/, "Email некорректный"),
+  password: yup
+    .string()
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^\w\s]).{6,}/,
+      "Пароль должен содержать минимум одну цифру, одну маленькую латинскую букву, одну большую латинскую букву и один спецсимвол"
+    )
+    .max(20, "Должно быть не больше 20 символов")
+    .min(3, "Должно быть больше 3 символов"),
+  repeatPassword: yup
+    .string()
+    .test("passwords-match", "Пароли должны совпадать", function (value) {
+      return value === this.parent.password;
+    }),
+});
+
 export const App = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+      repeatPassword: "",
+    },
+    resolver: yupResolver(fieldSchema),
+  });
+
+  const emailError = errors.email?.message;
+  const passwordError = errors.password?.message;
+  const repeatPasswordError = errors.repeatPassword?.message;
+
   const registerButtonRef = useRef(null);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
-  const [emailError, setEmailError] = useState(null);
-  const [passwordError, setPasswordError] = useState(null);
-  const [repeatPasswordError, setRepeatPasswordError] = useState(null);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [repeatPasswordFocused, setRepeatPasswordFocused] = useState(false);
-
-  const onEmailChange = ({ target }) => {
-    setEmail(target.value);
-    let error = null;
-
-    if (!/@/.test(target.value)) {
-      error = "Email некорректный";
-    }
-
-    setEmailError(error);
+  const onSubmit = (formData) => {
+    console.log(formData);
   };
 
-  const onPasswordChange = ({ target }) => {
-    setPassword(target.value);
-    let error = null;
-
-    if (
-      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^\w\s]).{6,}/.test(target.value)
-    ) {
-      error =
-        "Пароль должен содержать минимум одну цифру, одну маленькую латинскую букву, одну большую латинскую букву и один спецсимвол";
-    } else if (target.value.length > 20) {
-      error = "Пароль должен содержать не более 20 символов";
-    }
-
-    setPasswordError(error);
-  };
-
-  const onRepeatPasswordChange = ({ target }) => {
-    setRepeatPassword(target.value);
-    let error = null;
-
-    if (password !== target.value) {
-      error = "Пароли должны совпадать";
-    }
-
-    setRepeatPasswordError(error);
-  };
-
-  const onEmailBlur = () => {
-    setEmailFocused(true);
-  };
-
-  const onPasswordBlur = () => {
-    if (password.length < 6) {
-      setPasswordError("Пароль должен содержать не менее 6 символов");
-    }
-    setPasswordFocused(true);
-  };
-
-  const onReapetPasswordBlur = () => {
-    setRepeatPasswordFocused(true);
-  };
-
-  const onSubmit = (event) => {
-    event.preventDefault();
-    if (!emailError && !passwordError && !repeatPasswordError) {
-      registerButtonRef.current.focus();
-    }
-    console.log("email:" + email, "password:" + password);
-  };
+  if (!emailError && !passwordError && !repeatPasswordError) {
+    registerButtonRef.current.focus();
+  }
 
   return (
     <div className={styles.app}>
       <h1>User Sign Up</h1>
-      <form onSubmit={onSubmit}>
-        {emailFocused && emailError && (
-          <div className={styles.errorLabel}>{emailError}</div>
-        )}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {emailError && <div className={styles.errorLabel}>{emailError}</div>}
         <div className={styles.input}>
           <input
             name="email"
             type="email"
             placeholder="Почта"
-            value={email}
-            onChange={onEmailChange}
-            onBlur={onEmailBlur}
+            {...register("email")}
           />
         </div>
-        {passwordFocused && passwordError && (
+        {passwordError && (
           <div className={styles.errorLabel}>{passwordError}</div>
         )}
         <div className={styles.input}>
@@ -101,12 +70,10 @@ export const App = () => {
             name="password"
             type="password"
             placeholder="Пароль"
-            value={password}
-            onChange={onPasswordChange}
-            onBlur={onPasswordBlur}
+            {...register("password")}
           />
         </div>
-        {repeatPasswordFocused && repeatPasswordError && (
+        {repeatPasswordError && (
           <div className={styles.errorLabel}>{repeatPasswordError}</div>
         )}
         <div className={styles.input}>
@@ -114,23 +81,14 @@ export const App = () => {
             name="repeatPassword"
             type="password"
             placeholder="Повтор пароля"
-            value={repeatPassword}
-            onChange={onRepeatPasswordChange}
-            onBlur={onReapetPasswordBlur}
+            {...register("repeatPassword")}
           />
         </div>
         <div className={styles.input}>
           <button
             ref={registerButtonRef}
             type="submit"
-            disabled={
-              !email ||
-              !!emailError ||
-              !password ||
-              !!passwordError ||
-              !repeatPassword ||
-              !!repeatPasswordError
-            }
+            disabled={!!emailError || !!passwordError || !!repeatPasswordError}
           >
             Зарегестрироваться
           </button>
