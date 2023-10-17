@@ -1,25 +1,8 @@
 import { useForm } from "react-hook-form";
-import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useRef } from "react";
 import styles from "./app.module.css";
-
-const fieldSchema = yup.object().shape({
-  email: yup.string().matches(/@/, "Email некорректный"),
-  password: yup
-    .string()
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^\w\s]).{6,}/,
-      "Пароль должен содержать минимум одну цифру, одну маленькую латинскую букву, одну большую латинскую букву и один спецсимвол"
-    )
-    .max(20, "Должно быть не больше 20 символов")
-    .min(3, "Должно быть больше 3 символов"),
-  repeatPassword: yup
-    .string()
-    .test("passwords-match", "Пароли должны совпадать", function (value) {
-      return value === this.parent.password;
-    }),
-});
+import { FieldSchema } from "./modules/fieldSchema";
 
 export const App = () => {
   const {
@@ -32,7 +15,7 @@ export const App = () => {
       password: "",
       repeatPassword: "",
     },
-    resolver: yupResolver(fieldSchema),
+    resolver: yupResolver(FieldSchema),
   });
 
   const emailError = errors.email?.message;
