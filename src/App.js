@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import styles from "./app.module.css";
 
 const fieldSchema = yup.object().shape({
@@ -41,13 +41,16 @@ export const App = () => {
 
   const registerButtonRef = useRef(null);
 
+  // Добавил useEffect для установки фокуса после рендеринга кнопки
+  useEffect(() => {
+    if (!emailError && !passwordError && !repeatPasswordError) {
+      registerButtonRef.current.focus();
+    }
+  }, [emailError, passwordError, repeatPasswordError]);
+
   const onSubmit = (formData) => {
     console.log(formData);
   };
-
-  if (!emailError && !passwordError && !repeatPasswordError) {
-    registerButtonRef.current.focus();
-  }
 
   return (
     <div className={styles.app}>
@@ -90,7 +93,7 @@ export const App = () => {
             type="submit"
             disabled={!!emailError || !!passwordError || !!repeatPasswordError}
           >
-            Зарегестрироваться
+            Зарегистрироваться
           </button>
         </div>
       </form>
